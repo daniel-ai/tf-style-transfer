@@ -5,7 +5,7 @@ _This is a personal github repository. Don't share with others untill we are rea
 The project purposes are
  * implement the image style transfer methods (currently a slow sing-image converter and a real-time per-style converter) in tensorflow 
  * train per-style converters using diffrent style images on Amazon EC2
- * build tensorflow web services using trained per-style converters and lauch publicly
+ * build tensorflow web services using trained per-style converters and launch publicly
 
 <p align="center">
 <img src="image_input/golden_gate.jpg" width="320"/>
