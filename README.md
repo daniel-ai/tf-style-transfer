@@ -8,11 +8,16 @@ The project purposes are
  * build tensorflow web services using trained per-style converters and launch publicly
 
 <p align="center">
-<img src="image_input/golden_gate.jpg" width="320"/>
-<img src="image_output/golden_gate.jpg" width="320"/>
+<img src="image_input/golden_gate.jpg" width="400"/>
+<img src="image_input/style.jpg" width="400"/>
 </p>
 
 The a slow sing-image converter is coded in style_model.py. It converts a content image to a perticular art style based on the given style image.
+
+<p align="center">
+<img src="image_output/golden_gate.jpg" width="700"/>
+</p>
+
 
 ### How to run
 
@@ -32,18 +37,17 @@ Default training finishes after 500 steps, which takes about 3 hours on mac pro 
 ### Next steps
 
  1. Code the real-time per-style converter in tensorflow. I will finish in about 2-3 days.
- 2. Move all traning to Amazon EC2 (with GPU). This task includes
+ 2. Config and automate traning on Amazon EC2 (with GPU). This task includes
   * research online what's the easist way to setup AWS GPU environment (install CUDA 7.5 and other things for tensorflow). There should be pre-set dockers/images online.
   * understand basics of tensorflow GPU/CPU and distributed training (check official tutorial)
   * modify the simple sing-image code and test on AWS to improve traning speed   
-
- WanZheng will start doing this and I will join after I finish writing the new model. Hopefully we can finish in about one week.
- 
- 3. tensorflow serving - build web services with tensorflow
+ 3. Optimize and train real-time per-style converters using different style images
+  * modify the real-time per-style converters and test on AWS to improve traning speed
+  * test a set of loss function settings and find the best/fatest loss function setting
+  * train 10-20 converters using popular style images
+ 4. tensorflow serving - build web services with tensorflow
   * use and understand google image classification tensorflow APIs
   * basics of docker - use kubernetes or something popular
   * build simple web service using tensorflow trained models on AWS (check official tutorial and research online)
  
- YanQing will focus on this and our target is to launch first version before end of Nov.
-
 Please let me know if you have any questions. We will do regular meetings on a weekly basis. 
