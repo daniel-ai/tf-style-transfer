@@ -1,3 +1,5 @@
 stylized*.jpg
 *.mat
-*_dev.py
+*_dev*.py
+models/
+COCO/
