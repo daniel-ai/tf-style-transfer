@@ -1,52 +1,48 @@
 # tf-style-transfer
 
-_This is a personal github repository. Don't share with others untill we are ready._ 
+Tensorflow implementation of a collection of style transfer methods
 
-The project purposes are
- * implement the image style transfer methods (currently a slow sing-image converter and a real-time per-style converter) in tensorflow 
- * train per-style converters using diffrent style images on Amazon EC2
- * build tensorflow web services using trained per-style converters and launch publicly
-
-<p align="center">
-<img src="image_input/golden_gate.jpg" width="400"/>
-<img src="image_input/style.jpg" width="400"/>
+ <p align="center">
+<img src="image_input/c_golden_gate.jpg" width="400"/>
+<img src="image_input/style.jpg" width="200"/>
 </p>
 
-This slow sing-image converter is coded in style_model.py. It converts a content image to a perticular art style based on the given style image.
+ 1. slow single image method: optimize each pixel value of an image to preserve content features from the original content image and style features from a style image
+ 
+ _Image Style Transfer Using Convolutional Neural Networks_
+ 
 
-<p align="center">
-<img src="image_output/golden_gate.jpg" width="700"/>
+ <p align="center">
+<img src="image_output/golden_gate_single_image.jpg" width="400"/>
 </p>
 
+ 2. fast single style method: optimize a image transfer neural network for each style image to preserve similar content features and style features.
+ 
+ _Perceptual Losses for Real-Time Style Transfer and Super-Resolution_
+ 
+ <p align="center">
+<img src="image_output/golden_gate_single_style.jpg" width="400"/>
+</p>
+ 
+ 3. fast general style method: train a genera image transfer neural network with only normalization layers optimized for each style image to preserve similar content features and style features.
 
 ### How to run
 
- 1. check imported packeges in style_model.py
+ 1. Install packeges tensorflow, numpy, scipy, PIL
  2. download pretrained VGG16 nerual network file imagenet-vgg-verydeep-16.mat from http://www.vlfeat.org/matconvnet/pretrained/ and put under models folder
- 3. change file locations at the top of style_model.py (optional)
- 4. run python style_model.py using default content and style images or run python style_model.py --content content_img --style style_img
+ 3. for method 2&3, preprare a training set of content images (http://mscoco.org/dataset/#download) and resize all images to a standard size ([256, 256]).
 
-Default training finishes after 500 steps, which takes about 3 hours on mac pro cpu.
+To train a model:
+```
+python slow_single_image.py --content your_content_image --style your_style_image --vggfile downloaded_vgg_mat_file --max_iteration n
+python fast_single_style.py --style your_style_image --train_dir training_image_dir --vggfile downloaded_vgg_mat_file --max_iteration n
+python fast_general_style.py --style_dir your_style_image_dir(s_*.jpg) --train_dir training_image_dir --vggfile downloaded_vgg_mat_file --max_iteration n
+```
+To stylize an image for method 2&3:
+```
+python fast_single_style.py --stylize --content_dir your_content_image_dir(c_*.jpg) --model your_saved_session_file
+python fast_general_style.py --stylize --content_dir your_content_image_dir(c_*.jpg) --model your_saved_session_file
+```
 
-### First things you should do
+Check the code for more options.
 
- 1. understand basics of github - branch, pull, push, commit, etc.; start dissussion, sharing and contributing with these tools
- 2. understand basic concepts of convolutional neural networks http://cs231n.github.io/convolutional-networks/ 
- 3. read tensorflow official tutorial and understand basic examples there
-
-### Next steps
-
- 1. Code the real-time per-style converter in tensorflow. I will finish in about 2-3 days.
- 2. Config and automate traning on Amazon EC2 (with GPU). This task includes 
-  * research online what's the easist way to setup AWS GPU environment (install CUDA 7.5 and other things for tensorflow). There should be pre-set dockers/images online.
-  * understand basics of tensorflow GPU/CPU and distributed training (check official tutorial)
-  * modify the simple sing-image code and test on AWS to improve traning speed   
- 3. Optimize and train real-time per-style converters using different style images 
-  * modify the real-time per-style converters and test on AWS to improve traning speed
-  * train 10-20 converters using popular style images
- 4. tensorflow serving - build web services with tensorflow
-  * use and understand google image classification tensorflow APIs
-  * basics of docker - use kubernetes or something popular
-  * build simple web service using tensorflow trained models on AWS (check official tutorial and research online)
- 
-Please let me know if you have any questions. We will do regular meetings on a weekly basis. 
