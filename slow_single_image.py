@@ -113,14 +113,8 @@ class Network:
 
     Args:
         modeldesc: a string description of the neural network layers
-<<<<<<< HEAD
         filters: a dictionary {layer_num:[list of parameters]} of pre-trained models
         process: bool, whether to  use preprocesss on input image
-=======
-        filters: a dictionary {layer_num:[lsit of parameters]} of
-                 pre-trained models
-        process: bool, whether to use preprocesss on input image
->>>>>>> 05417c68216b97ca3480e0cdde2ac3e08e15eddc
     Returns:
         a network class with method eval()
     """
@@ -190,11 +184,7 @@ def load_vgg16(vggfile):
     weights = []
     for k in range(len(vgg16_layers)):
         if vgg16_layers[k][0][0][1][0] == 'conv':
-<<<<<<< HEAD
             kernel = np.transpose(vgg16_layers[k][0][0][2][0][0], (1,0,2,3)) #(1,0,2,3) is the index of the tensor information.
-=======
-            kernel = np.array(vgg16_layers[k][0][0][2][0][0])
->>>>>>> 05417c68216b97ca3480e0cdde2ac3e08e15eddc
             bias = np.reshape(vgg16_layers[k][0][0][2][0][1],-1)
             weights.append([kernel, bias])
         else:
