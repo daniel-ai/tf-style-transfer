@@ -359,6 +359,9 @@ def images_resize(image_size, train_dir):
             image = scipy.misc.imread(os.path.join(root,filenm))
             if len(image.shape) != 3 or image.shape[-1] != 3:
                 os.remove(os.path.join(root,filenm))
+                continue
+            print filenm
+            print image.shape, image_size
             if image.shape[0]/image.shape[1] >= image_size[0]/image_size[1]:
                 image = scipy.misc.imresize(image, [int(image_size[0]*image.shape[0]/image.shape[1]),image_size[1]])
                 start_index = int((image.shape[0]-image_size[0])/2)
@@ -371,7 +374,8 @@ def images_resize(image_size, train_dir):
             Image.fromarray(image).save(os.path.join(root,filenm))
 
 if __name__ == '__main__':
-  main()
-
+  #main()
+  #First resize (format) all the trainging images of 2014 Training images [80K/13GB] in COCO directory.
+  images_resize((256,256,3), './COCO/')
 
 

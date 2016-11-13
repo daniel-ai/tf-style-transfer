@@ -11,6 +11,8 @@ from datetime import datetime
 
 # description of pre-trained VGG neural network layers in the form of 'layer_type-input_channels-output_channels-kernel_height-kernel_width-stride_height-stride-width' if the parameters are needed for the corresponding layer_type
 # only the first 23 layers are used
+# Commented by wangzhen
+# Description may be wrong. See http://cs.stanford.edu/people/karpathy/vgg_train_val.prototxt
 VGG16DESC = 'conv2d-3-3-3-64-1-1, relu, conv2d-3-3-64-64-1-1, relu, mpool-2-2-2-2, conv2d-3-3-64-128-1-1, relu, conv2d-3-3-128-128-1-1, relu, mpool-2-2-2-2, conv2d-3-3-128-256-1-1, relu, conv2d-3-3-256-256-1-1, relu, conv2d-3-3-256-256-1-1, relu, mpool-2-2-2-2, conv2d-3-3-256-512-1-1, relu, conv2d-3-3-512-512-1-1, relu, conv2d-3-3-512-512-1-1, relu'
 # weights used to evaluate content and style transfer loss
 C_WEIGHTS = dict([('layer_16',1)])
@@ -85,7 +87,7 @@ class Network:
 
     Args:
         modeldesc: a string description of the neural network layers
-        filters: a dictionary {layer_num:[lsit of parameters]} of pre-trained models
+        filters: a dictionary {layer_num:[list of parameters]} of pre-trained models
         process: bool, whether to  use preprocesss on input image
     Returns:
         a network class with method eval()
@@ -151,7 +153,7 @@ def load_vgg16(vggfile):
     weights = []
     for k in range(len(vgg16_layers)):
         if vgg16_layers[k][0][0][1][0] == 'conv':
-            kernel = np.transpose(vgg16_layers[k][0][0][2][0][0], (1,0,2,3))
+            kernel = np.transpose(vgg16_layers[k][0][0][2][0][0], (1,0,2,3)) #(1,0,2,3) is the index of the tensor information.
             bias = np.reshape(vgg16_layers[k][0][0][2][0][1],-1)
             weights.append([kernel, bias])
         else:
