@@ -13,8 +13,8 @@ VGG16DESC = (
     'relu, conv2d-3-3-512-512-1-1, relu, conv2d-3-3-512-512-1-1, relu')
 # weights used to evaluate content and style loss
 C_WEIGHTS = dict([('layer_16',1)])
-S_WEIGHTS = dict([('layer_4',0.01), ('layer_9',0.01), ('layer_16',0.01),
-                 ('layer_23',0.01)])
+S_WEIGHTS = dict([('layer_4',0.001), ('layer_9',0.001), ('layer_16',0.001),
+                 ('layer_23',0.001)])
 TV_WEIGHTS = 0.00001
 
 
@@ -31,9 +31,9 @@ def loss_vgg(style_images, content_image, output_images, vggfile):
         VGG16DESC, 'vgg16', initial=vgg16_filters, process=True)
     c_net = vgg16.layers(content_image, c_layers)
 
-    c_loss = 0
-    s_loss = 0
-    tv_loss = 0
+    c_loss = 0.
+    s_loss = 0.
+    tv_loss = 0.
     for style in style_images:
         s_net = vgg16.layers(style_images[style], s_layers)
         o_net = vgg16.layers(output_images[style], set(c_layers+s_layers))
@@ -50,8 +50,8 @@ def loss_vgg(style_images, content_image, output_images, vggfile):
                           - output_images[style][:,:-1,:,:])
             + tf.nn.l2_loss(output_images[style][:,:,1:,:]
                             - output_images[style][:,:,:-1,:]))
-    n_styles = len(style_images)
-    return c_loss/n_styles, s_loss/n_styles, tv_loss/n_styles
+    style_num = len(style_images)
+    return c_loss/style_num, s_loss/style_num, tv_loss/style_num
 
 def Gram(layer, batch_size):
     """ calcualte the gram matrix for the loss function """

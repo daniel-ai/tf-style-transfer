@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 
 # description of neural network layers in the form of
-# 'layer_type-input_channels-output_channels-kernel_height-kernel_width
+# 'layer_type-kernel_height-kernel_width-input_channels-output_channels
 #  -stride_height-stride-width'
 # if the parameters are needed for the corresponding layer_type
 # only the first 23 layers of VGG 16 neural network are used
@@ -22,8 +22,8 @@ VGG16DESC = (
     'relu, conv2d-3-3-512-512-1-1, relu, conv2d-3-3-512-512-1-1, relu')
 # weights used to evaluate content and style loss
 C_WEIGHTS = dict([('layer_16',1)])
-S_WEIGHTS = dict([('layer_4',0.01), ('layer_9',0.01), ('layer_16',0.01),
-                 ('layer_23',0.01)])
+S_WEIGHTS = dict([('layer_4',0.001), ('layer_9',0.001), ('layer_16',0.001),
+                 ('layer_23',0.001)])
 TV_WEIGHTS = 0.00001
 
 
@@ -184,7 +184,7 @@ def load_vgg16(vggfile):
     weights = []
     for k in range(len(vgg16_layers)):
         if vgg16_layers[k][0][0][1][0] == 'conv':
-            kernel = np.transpose(vgg16_layers[k][0][0][2][0][0], (1,0,2,3)) #(1,0,2,3) is the index of the tensor information.
+            kernel = np.array(vgg16_layers[k][0][0][2][0][0])
             bias = np.reshape(vgg16_layers[k][0][0][2][0][1],-1)
             weights.append([kernel, bias])
         else:

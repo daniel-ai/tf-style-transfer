@@ -7,11 +7,14 @@ import numpy as np
 from PIL import Image
 from argparse import ArgumentParser
 from datetime import datetime
-import os, sys, scipy.io
-import loss, nn_build
+import os
+import sys
+import scipy.io
+import loss
+import nn_build
 
 # description of neural network layers in the form of
-# 'layer_type-input_channels-output_channels-kernel_height-kernel_width
+# 'layer_type-kernel_height-kernel_width-input_channels-output_channels
 # -stride_height-stride-width'
 # if the parameters are needed for the corresponding layer_type
 # layer_type norm = instance normalization
@@ -22,8 +25,9 @@ MODELDESC = (
     'relu, conv2d-3-3-64-128-2-2, s_norm-128, relu, res-3-3-128-128-1-1, '
     'res-3-3-128-128-1-1, res-3-3-128-128-1-1, res-3-3-128-128-1-1, '
     'res-3-3-128-128-1-1, tconv2d-3-3-128-64-2-2, s_norm-64, relu, '
-    'tconv2d-3-3-64-32-2-2, s_norm-32, relu, tconv2d-9-9-32-3-1-1, tanh_resc')
-STYLES_TRAINED = ['1','2','3','4','5','6']
+    'tconv2d-3-3-64-32-2-2, s_norm-32, relu, tconv2d-9-9-32-3-1-1, s_norm-3, '
+    'tanh_resc')
+STYLES_TRAINED = ['star', 'wave', 'mountain', 'horse']
 
 
 def args():
@@ -52,7 +56,7 @@ def args():
                         help='number of batches used for validation')
     parser.add_argument('--global_step', type=int, default=0,
                         help='global count of training iterations')
-    parser.add_argument('--max_iteration', type=int, default=20000,
+    parser.add_argument('--max_iteration', type=int, default=40000,
                          help='maximum number of iterations for training')
     parser.add_argument('--eval_iteration', type=int, default=1000,
                         help='evaluate loss per number of iterations')
@@ -60,7 +64,7 @@ def args():
                          help='save session file per number of iterations',)
     parser.add_argument('--stylize', action='store_true',
                         help='bool whether to stylize or train models')
-    parser.add_argument('--model', type=str, default='./models/model_single',
+    parser.add_argument('--model', type=str, default='./models/model_general',
                         help='model file for save/restore')
     parser.add_argument('--output_dir', type=str, default='./image_output/',
                         help='path to save stylized images')
@@ -113,11 +117,13 @@ def train(model_name, style_dir, train_dir, train_image_size, global_step,
     c_loss, s_loss, tv_loss = loss.loss_vgg(
         style_images, content_image, output_images, vggfile)
     total_loss = c_loss + s_loss + tv_loss
+
     # use Adam optimizer with gradient clipping
-    optimizer = tf.train.AdamOptimizer(lr)
-    tvars = tf.trainable_variables()
-    grads, _ = tf.clip_by_global_norm(tf.gradients(total_loss, tvars), 1)
-    train_op = optimizer.apply_gradients(zip(grads, tvars))
+    # optimizer = tf.train.AdamOptimizer(lr)
+    # tvars = tf.trainable_variables()
+    # grads, _ = tf.clip_by_global_norm(tf.gradients(total_loss, tvars), 1)
+    # train_op = optimizer.apply_gradients(zip(grads, tvars))
+    train_op = tf.train.AdamOptimizer(lr).minimize(total_loss)
 
     train_images = train_set(train_dir)
     # first val_size of batches are used as the validation set
@@ -207,7 +213,8 @@ class train_set:
             for filenm in files:
                 if filenm[-4:] == '.jpg':
                     self.files.append(os.path.join(root,filenm))
-        self.number = len(files)
+        # np.random.shuffle(self.files)
+        self.number = len(self.files)
         self.index = 0
 
     def __call__(self, batch_size):

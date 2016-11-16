@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 
 # description of neural network layers in the form of
-# 'layer_type-input_channels-output_channels-kernel_height-kernel_width
+# 'layer_type-kernel_height-kernel_width-input_channels-output_channels
 # -stride_height-stride-width'
 # if the parameters are needed for the corresponding layer_type
 # layer_type norm = instance normalization
@@ -31,13 +31,13 @@ MODELDESC = (
     'conv2d-3-3-64-128-2-2, norm-128, relu, res-3-3-128-128-1-1,'
     'res-3-3-128-128-1-1, res-3-3-128-128-1-1, res-3-3-128-128-1-1,'
     'res-3-3-128-128-1-1, tconv2d-3-3-128-64-2-2, norm-64, relu,'
-    'tconv2d-3-3-64-32-2-2, norm-32, relu, tconv2d-9-9-32-3-1-1, tanh_resc')
+    'tconv2d-3-3-64-32-2-2, norm-32, relu, tconv2d-9-9-32-3-1-1, norm-3,'
+    'tanh_resc')
 # weights used to evaluate content and style loss
 C_WEIGHTS = dict([('layer_16',1)])
-S_WEIGHTS = dict([('layer_4',0.01), ('layer_9',0.01), ('layer_16',0.01),
-                 ('layer_23',0.01)])
+S_WEIGHTS = dict([('layer_4',0.001), ('layer_9',0.001), ('layer_16',0.001),
+                 ('layer_23',0.001)])
 TV_WEIGHTS = 0.00001
-
 
 def args():
     parser = ArgumentParser()
@@ -113,11 +113,7 @@ def train(name, style, train_dir, image_size, global_step, lr, batch_size,
     c_loss, s_loss, tv_loss = loss_vgg(
         style_image, content_image, output_image, vggfile)
     loss = c_loss + s_loss + tv_loss
-    # use Adam optimizer with gradient clipping
-    optimizer = tf.train.AdamOptimizer(lr)
-    tvars = tf.trainable_variables()
-    grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars), 1)
-    train_op = optimizer.apply_gradients(zip(grads, tvars))
+    train_op = tf.train.AdamOptimizer(lr).minimize(loss)
 
     train_images = train_set(train_dir)
     # first val_size of batches are used as the validation set
@@ -158,6 +154,10 @@ def train(name, style, train_dir, image_size, global_step, lr, batch_size,
                     '%.1f, ave_time = %s') %(
                     i+1, val_c_loss, val_s_loss, val_tv_loss,
                     (time_end-time_start)/iterations)
+                print 'gradients:'
+                tvars = tf.trainable_variables()
+                temp = sess.run(tf.gradients(loss, tvars), {content_image: image})
+                print [tf.sqrt(tf.reduce_mean(value*value)).eval() for value in temp]
                 sys.stdout.flush()
                 time_start = datetime.now()
             if  (i+1) % save_iteration == 0 or (i+1) == max_iteration:
@@ -203,7 +203,8 @@ class train_set:
             for filenm in files:
                 if filenm[-4:] == '.jpg':
                     self.files.append(os.path.join(root,filenm))
-        self.number = len(files)
+        # np.random.shuffle(self.files)
+        self.number = len(self.files)
         self.index = 0
 
     def __call__(self, batch_size):
@@ -273,18 +274,20 @@ class Network(object):
 
     def layers(self, image, layers):
         """ evaluate certain vgg layers' values given an image """
-        output_image = preprocess(image) if self.process else image
+        output_image = preprocess(image) if self.process else image/255.
         eval_layers = {}
         max_layer = max([int(layer[6:]) for layer in layers])
         for k in range(max_layer):
             layer_name = 'layer_{}'.format(k+1)
             if self.layers_desc[k][0] == 'res':
                 output_image = res_layer_eval(
-                    output_image, self.layers_desc[k],
+                    output_image,
+                    self.layers_desc[k],
                     self.filters[layer_name])
             else:
                 output_image = basic_layer_eval(
-                    output_image, self.layers_desc[k],
+                    output_image,
+                    self.layers_desc[k],
                     self.filters[layer_name])
             if layer_name in layers:
                 eval_layers[layer_name] = output_image
@@ -325,12 +328,13 @@ def basic_layer_eval(image, layer_desc, layer_filter):
         image = padding(image, kernel, stride)
         return tf.nn.max_pool(image, [1]+kernel+[1], [1]+stride+[1], 'VALID')
     elif layer_desc[0] == 'norm':
-        mean, variance = tf.nn.moments(image, [1,2], keep_dims=True)
+        mean, var = tf.nn.moments(image, [1,2], keep_dims=True)
+        var = tf.maximum(var, 0.)
         _, _, _, c = image.get_shape().as_list()
         scales = tf.reshape(layer_filter[0], [1,1,1,c])
         offsets = tf.reshape(layer_filter[1], [1,1,1,c])
         return tf.nn.batch_normalization(
-            image, mean, variance, offsets, scales, 1e-5)
+            image, mean, var, offsets, scales, 1e-5)
     elif layer_desc[0] == 'tconv2d':
         b, h, w, c = image.get_shape().as_list()
         s_1, s_2 = map(int, layer_desc[5:7])
@@ -393,21 +397,21 @@ def basic_filter_init(layer_desc, layer_initial, trainable):
                     initializer=tf.truncated_normal_initializer(stddev=0.01))
                 para_1 = tf.get_variable(
                     'biases', [int(layer_desc[4])],
-                    initializer=tf.constant_initializer(0))
+                    initializer=tf.constant_initializer(0.))
             elif layer_desc[0] == 'tconv2d':
                 h, w, i_c, o_c = map(int, layer_desc[1:5])
                 para_0 = tf.get_variable(
                     'weights', [h, w, o_c, i_c],
                     initializer=tf.truncated_normal_initializer(stddev=0.01))
                 para_1 = tf.get_variable(
-                    'biases', [o_c], initializer=tf.constant_initializer(0))
+                    'biases', [o_c], initializer=tf.constant_initializer(0.))
             elif layer_desc[0] == 'norm':
                 para_0 = tf.get_variable(
                     'scales', int(layer_desc[1]),
-                    initializer=tf.constant_initializer(1)),
+                    initializer=tf.constant_initializer(1.)),
                 para_1 = tf.get_variable(
                     'offsets', int(layer_desc[1]),
-                    initializer=tf.constant_initializer(0))
+                    initializer=tf.constant_initializer(0.))
         else:
             raise ValueError("Please load trained models for initialization.")
         return [para_0, para_1]
@@ -431,11 +435,7 @@ def Gram(layer, batch_size):
         bs, h, w, c = layer.shape
     else:
         bs, h, w, c = layer.get_shape().as_list()
-    if bs ==  1 and batch_size > 1:
-        rep_layer = tf.pack([layer for k in range(batch_size)])
-        flat = tf.reshape(rep_layer, [batch_size, -1, c])
-    else:
-        flat = tf.reshape(layer, [bs, -1, c])
+    flat = tf.reshape(layer, [bs, -1, c])
     return tf.batch_matmul(tf.transpose(flat, [0,2,1]), flat)/(h*w*c)
 
 

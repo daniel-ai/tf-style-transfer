@@ -103,12 +103,13 @@ def basic_layer_eval(image, layer_desc, layer_filter):
         image = padding(image, kernel, stride)
         return tf.nn.max_pool(image, [1]+kernel+[1], [1]+stride+[1], 'VALID')
     elif layer_desc[0] == 'norm':
-        mean, variance = tf.nn.moments(image, [1,2], keep_dims=True)
+        mean, var = tf.nn.moments(image, [1,2], keep_dims=True)
+        var = tf.maximum(var, 0.)
         _, _, _, c = image.get_shape().as_list()
         scales = tf.reshape(layer_filter[0], [1,1,1,c])
         offsets = tf.reshape(layer_filter[1], [1,1,1,c])
         return tf.nn.batch_normalization(
-            image, mean, variance, offsets, scales, 1e-5)
+            image, mean, var, offsets, scales, 1e-5)
     elif layer_desc[0] == 'tconv2d':
         b, h, w, c = image.get_shape().as_list()
         s_1, s_2 = map(int, layer_desc[5:7])
