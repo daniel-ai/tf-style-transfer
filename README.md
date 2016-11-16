@@ -100,4 +100,8 @@ python fast_single_style.py --stylize --content_dir your_content_image_dir
 python fast_general_style.py --stylize --content_dir your_content_image_dir
 ```
 
+### Reference:
 
+* Torch version of the fast single style method from the author https://github.com/jcjohnson/fast-neural-style
+
+* Google's official tensorflow implementation of the fast general style method https://github.com/tensorflow/magenta/tree/master/magenta/models/image_stylization
