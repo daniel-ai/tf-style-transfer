@@ -96,8 +96,8 @@ python fast_general_style.py --style_dir your_style_image_dir --train_dir traini
 #### To stylize images:
 Put all your images under the same folder with name start with 'c\_\*.jpg'.
 ```
-python fast_single_style.py --stylize --content_dir your_content_image_dir
-python fast_general_style.py --stylize --content_dir your_content_image_dir
+python fast_single_style.py --stylize --content_dir your_content_image_dir --model './models/model_single_star'
+python fast_general_style.py --stylize --content_dir your_content_image_dir 
 ```
 
 ### Reference:
